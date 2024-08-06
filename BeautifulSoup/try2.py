@@ -4,7 +4,7 @@ import pandas as pd
 import os
 
 # Define the URL of the Wikipedia page
-url = 'https://en.wikipedia.org/wiki/The_Greatest_Indian'  # Replace with the actual URL
+url = 'https://en.wikipedia.org/wiki/List_of_Indian_people'  # Replace with the actual URL
 
 # Function to download image
 def download_image(img_url, folder='images'):
@@ -21,22 +21,25 @@ def download_image(img_url, folder='images'):
 response = requests.get(url)
 soup = BeautifulSoup(response.text, 'html.parser')
 
-# Find the relevant sections
+# Initialize an empty list to collect data
 data = []
-print()
-for item in soup.find_all('div', class_='mw-parser-output'):
-    name = item.find('a', class_='mw-redirect')
-    if name:
-        name = name.text.strip()
-        img_tag = item.find('img')
-        img_url = 'https:' + img_tag['src'] if img_tag else 'No Image'
-        description = item.find('p').text.strip() if item.find('p') else 'No Description'
+
+# Parse the HTML to find the relevant sections
+for item in soup.find_all('li'):
+    name_tag = item.find('a')
+    if name_tag:
+        name = name_tag.text.strip()
+        img_tag = item.find('a')
+        img_url = 'https:' + img_tag['href'] if img_tag else 'No Image'
+        description = item.find_next_sibling('p').text.strip() if item.find_next_sibling('p') else 'No Description'
         
         # Download the image
         img_path = download_image(img_url) if img_url != 'No Image' else 'No Image'
         
         data.append({'Name': name, 'Image Path': img_path, 'Description': description})
 
-# Save to CSV
+# Convert the list of dictionaries to a pandas DataFrame
 df = pd.DataFrame(data)
+
+# Save the DataFrame to a CSV file
 df.to_csv('indian_personalities.csv', index=False)
